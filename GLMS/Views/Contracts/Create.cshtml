@@ -1,0 +1,116 @@
+﻿@model GLMS.Models.Contract
+
+@{
+    ViewData["Title"] = "Create Contract";
+    var clients = ViewBag.Clients as IEnumerable<GLMS.Models.Client>;
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="bi bi-file-earmark-plus-fill"></i> Create New Contract</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ClientId" class="form-label"></label>
+                                <select asp-for="ClientId" class="form-select" asp-items="@(new SelectList(clients, "Id", "Name"))">
+                                    <option value="">-- Select Client --</option>
+                                </select>
+                                <span asp-validation-for="ClientId" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ServiceLevel" class="form-label"></label>
+                                <select asp-for="ServiceLevel" class="form-select" asp-items="Html.GetEnumSelectList<ServiceLevel>()"></select>
+                                <span asp-validation-for="ServiceLevel" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="StartDate" class="form-label"></label>
+                                <input asp-for="StartDate" class="form-control" type="date" />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="EndDate" class="form-label"></label>
+                                <input asp-for="EndDate" class="form-control" type="date" />
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ContractValue" class="form-label">Contract Value (USD)</label>
+                                <input asp-for="ContractValue" class="form-control" placeholder="0.00" />
+                                <span asp-validation-for="ContractValue" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Status" class="form-label"></label>
+                                <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<ContractStatus>()"></select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input asp-for="AutoRenew" class="form-check-input" />
+                                    <label asp-for="AutoRenew" class="form-check-label"></label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="NoticePeriodDays" class="form-label"></label>
+                                <input asp-for="NoticePeriodDays" class="form-control" />
+                                <span asp-validation-for="NoticePeriodDays" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TermsAndConditions" class="form-label"></label>
+                            <textarea asp-for="TermsAndConditions" class="form-control" rows="3" placeholder="Enter terms and conditions..."></textarea>
+                            <span asp-validation-for="TermsAndConditions" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="SpecialClauses" class="form-label"></label>
+                            <textarea asp-for="SpecialClauses" class="form-control" rows="2" placeholder="Any special clauses..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="SignedAgreement" class="form-label">Signed Agreement (PDF)</label>
+                            <input asp-for="SignedAgreement" type="file" class="form-control" accept=".pdf" />
+                            <small class="text-muted">Only PDF files up to 10MB are allowed.</small>
+                            <span asp-validation-for="SignedAgreement" class="text-danger"></span>
+                        </div>
+
+                        <hr />
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to List
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save"></i> Create Contract
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

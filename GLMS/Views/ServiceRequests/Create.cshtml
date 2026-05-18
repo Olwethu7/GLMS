@@ -1,0 +1,148 @@
+﻿@model GLMS.Models.ServiceRequest
+
+@{
+    ViewData["Title"] = "Create Service Request";
+    var contracts = ViewBag.Contracts as IEnumerable<GLMS.Models.Contract>;
+    var exchangeRate = ViewBag.ExchangeRate;
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3><i class="bi bi-plus-circle"></i> Create Service Request</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <!-- Contract Selection -->
+                        <div class="mb-3">
+                            <label asp-for="ContractId" class="form-label fw-bold">Contract *</label>
+                            <select asp-for="ContractId" class="form-select" id="contractSelect">
+                                <option value="">-- Select Active Contract --</option>
+                                @if (contracts != null)
+                                {
+                                    foreach (var contract in contracts)
+                                    {
+                                        <option value="@contract.Id">
+                                            @contract.ContractReference - @contract.Client?.Name (Expires: @contract.EndDate.ToShortDateString())
+                                        </option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="ContractId" class="text-danger"></span>
+                            <small class="text-muted">Only active contracts within valid date range are shown</small>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-bold">Service Description *</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Describe the service required..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <!-- Amount USD with Live Conversion -->
+                        <div class="mb-3">
+                            <label asp-for="AmountUSD" class="form-label fw-bold">Amount (USD) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="AmountUSD" class="form-control" id="amountUSD" step="0.01" placeholder="0.00" />
+                            </div>
+                            <span asp-validation-for="AmountUSD" class="text-danger"></span>
+                        </div>
+
+                        <!-- Amount ZAR (Auto-calculated) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Amount (ZAR)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                <input type="text" class="form-control" id="amountZAR" readonly disabled style="background-color: #e9ecef;" />
+                            </div>
+                            <small class="text-muted">
+                                Exchange Rate: 1 USD = <span id="exchangeRate">@exchangeRate</span> ZAR
+                                <i class="bi bi-arrow-repeat" id="refreshRate" style="cursor: pointer;" title="Refresh exchange rate"></i>
+                            </small>
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="mb-3">
+                            <label asp-for="Priority" class="form-label fw-bold">Priority</label>
+                            <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<PriorityLevel>()"></select>
+                            <span asp-validation-for="Priority" class="text-danger"></span>
+                        </div>
+
+                        <!-- Required By Date -->
+                        <div class="mb-3">
+                            <label asp-for="RequiredByDate" class="form-label fw-bold">Required By Date</label>
+                            <input asp-for="RequiredByDate" class="form-control" type="date" />
+                            <span asp-validation-for="RequiredByDate" class="text-danger"></span>
+                        </div>
+
+                        <!-- Special Instructions -->
+                        <div class="mb-3">
+                            <label asp-for="SpecialInstructions" class="form-label fw-bold">Special Instructions</label>
+                            <textarea asp-for="SpecialInstructions" class="form-control" rows="2" placeholder="Any special delivery instructions or notes..."></textarea>
+                            <span asp-validation-for="SpecialInstructions" class="text-danger"></span>
+                        </div>
+
+                        <hr />
+
+                        <!-- Important Note about Business Rule -->
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <strong>Business Rule:</strong> Service requests can ONLY be created for
+                            <strong>ACTIVE contracts</strong> that are within their valid date range.
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to List
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Create Service Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        const exchangeRateElement = document.getElementById('exchangeRate');
+        const amountUSDInput = document.getElementById('amountUSD');
+        const amountZARInput = document.getElementById('amountZAR');
+
+        function calculateZAR() {
+            const usdAmount = parseFloat(amountUSDInput.value) || 0;
+            const rate = parseFloat(exchangeRateElement.innerText) || 19.50;
+            const zarAmount = usdAmount * rate;
+            amountZARInput.value = 'R ' + zarAmount.toFixed(2);
+        }
+
+        amountUSDInput.addEventListener('input', calculateZAR);
+
+        // Refresh exchange rate
+        document.getElementById('refreshRate')?.addEventListener('click', async function() {
+            try {
+                const response = await fetch('/api/currency/rate');
+                const data = await response.json();
+                exchangeRateElement.innerText = data.rate;
+                calculateZAR();
+            } catch (error) {
+                console.error('Error fetching rate:', error);
+            }
+        });
+
+        // Initial calculation
+        calculateZAR();
+    </script>
+}

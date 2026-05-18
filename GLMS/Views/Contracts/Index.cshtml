@@ -1,0 +1,145 @@
+﻿@model GLMS.Models.ViewModels.ContractsIndexViewModel
+
+@{
+    ViewData["Title"] = "Contract Management Hub";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-file-earmark-text-fill"></i> Contract Management Hub
+        </h1>
+        <a asp-action="Create" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-circle"></i> New Contract
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Search/Filter Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5><i class="bi bi-funnel-fill"></i> Search & Filter Contracts</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" asp-action="Index">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Start Date From</label>
+                        <input type="date" name="startDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">End Date To</label>
+                        <input type="date" name="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Contract Status</label>
+                        <select name="status" class="form-select" asp-items="Html.GetEnumSelectList<ContractStatus>()">
+                            <option value="">-- All Status --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contracts Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Reference</th>
+                            <th>Client</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Service Level</th>
+                            <th>Value (USD)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Contracts)
+                        {
+                            var statusColor = item.GetStatusColor();
+                            var remainingDays = item.GetRemainingDays();
+
+                            <tr class="@(item.Status == ContractStatus.Expired ? "table-danger" : "")">
+                                <td>
+                                    <strong>@item.ContractReference</strong>
+                                    @if (item.AutoRenew)
+                                    {
+                                        <br />
+                                        <span class="badge bg-info">Auto-Renew</span>
+                                    }
+                                </td>
+                                <td>@item.Client?.Name</td>
+                                <td>@item.StartDate.ToShortDateString()</td>
+                                <td>@item.EndDate.ToShortDateString()</td>
+                                <td>
+                                    <span class="badge bg-@statusColor">
+                                        @item.Status
+                                    </span>
+                                    @if (remainingDays > 0 && remainingDays <= 30 && item.Status == ContractStatus.Active)
+                                    {
+                                        <br />
+                                        <span class="badge bg-warning text-dark">Expires in @remainingDays days</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.ServiceLevel == ServiceLevel.Enterprise)
+                                    {
+                                        <span class="badge bg-danger">⭐⭐⭐ Enterprise</span>
+                                    }
+                                    else if (item.ServiceLevel == ServiceLevel.Premium)
+                                    {
+                                        <span class="badge bg-warning text-dark">⭐⭐ Premium</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">⭐ Standard</span>
+                                    }
+                                </td>
+                                <td>$ @item.ContractValue.ToString("N2")</td>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!Model.Contracts.Any())
+            {
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle"></i> No contracts found matching your criteria.
+                </div>
+            }
+        </div>
+    </div>
+</div>
